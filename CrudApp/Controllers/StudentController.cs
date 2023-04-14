@@ -73,29 +73,27 @@ namespace CrudApp.Controllers
         {
             return View(_repository.Students.FirstOrDefault(p => p.StudentID == Id));
         }
-
-        public ViewResult GetStudentById(int Id)
+        [HttpGet]
+        public JsonResult GetbyID(int ID)
         {
-            return View(_repository.Students.FirstOrDefault(p => p.StudentID == Id));
+            var Student = _repository.Students.FirstOrDefault(x => x.StudentID.Equals(ID));
+            return Json(Student);
         }
-
         [HttpPost]
-        public IActionResult Edit(Student student)
+        public IActionResult Edit(Student Student)
         {
             if (ModelState.IsValid)
             {
-                _repository.SaveStudent(student);
+                _repository.SaveStudent(Student);
 
-
-                return new JsonResult(new {status = true, message = "Saved"});
+                return new JsonResult(new { status = true, message = "Saved" });
             }
             else
             {
-               
-                return RedirectToAction("Index");
+                return new JsonResult(new { status = false, message = "Failed" });
             }
-
         }
+
         #endregion
     }
 }

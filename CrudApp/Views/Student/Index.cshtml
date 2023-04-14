@@ -18,7 +18,7 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <div class="container">
-    <button type="button" class="btn btn-success" style="margin-bottom: 10px" data-toggle="modal" data-target="#myModal"><i class="fa fa-plus"></i>Add Student</button>
+    <button type="button" class="btn btn-success" style="margin-bottom: 10px"  data-toggle="modal" data-target="#myModal"><i class="fa fa-plus"></i>Add Student</button>
     <br />
     <div>
         <table id="dataTable" class="table table-striped dt-responsive nowrap" width="100%" cellspacing="0">
@@ -104,9 +104,34 @@
 </div>
 @*End edit new student*@
 
-<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="exampleModal"  role="dialog">
     <div class="modal-dialog" role="document">
-        <div id="loading"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Edit Student</h4>
+            </div>
+            <div class="modal-body">
+                <form method="post">
+                    <input type="hidden" id="txtStudentID" />
+                    <div class="mb-3">
+                        <label for="Name" class="col-form-label"> Name :</label>
+                        <input type="text" name="Name" class="form-control" id="txtNameEdit" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Email" class="col-form-label">Email:</label>
+                        <input type="text" class="form-control" name="Email" id="txtEmailEdit" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="City" class="col-form-label">City:</label>
+                        <input type="text" class="form-control" name="City" id="txtCityEdit" required />
+                    </div> <br />
+                    <div class="text-center">
+                        <button type="button" onclick="Edit()" class="btn btn-primary btn-block">Update & Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -117,7 +142,10 @@
             "ajax": {
                 "url": "/Student/LoadData",
                 "type": "GET",
-                "datatype": "json"
+                "datatype": "json",
+                "processing": true,
+                "serverSide": true,
+                "filter": true,
             },
             "columns": [
                 { "data": "studentID" },
@@ -128,18 +156,15 @@
                     "data": "studentID",
                     "render": function (data, i, ev) {
 
-                        var html = `<a href='#' class='btn btn-primary' onclick='Edit(` + data + `)'><i class='fa fa-pencil'></i></a> |
+                        var html = `<a href='#' class='btn btn-primary' id="btnUpdate" onclick='getbyID(` + data + `)'><i class='fa fa-pencil'></i></a> |
                                    <a type="button" class='btn btn-danger ml-5' onclick='DeleteData(`+ data + `)'><i class='fa fa-trash'></i></a> |`
                         return html;
                     }
                 },
 
             ]
-        });
-
-         
+        }); 
     });
-
 
     function DeleteData(Id) {
 
@@ -190,20 +215,16 @@
     }
  
     function Add() {
- 
         var studentID = '0';
         if ($('#StudentID').val() !== '') {
             studentID = $('#StudentID').val();
         }
-          
         var stdObj = {
             StudentID: studentID,
             Name: $('#Name').val(),
             Email: $('#Email').val(),
             City: $('#City').val(),
-
         };
-        console.log(JSON.stringify(stdObj));
         $.ajax({
             url: "/Student/Create",
             data: { student: stdObj },
@@ -234,19 +255,65 @@
             inputs[i].value = "";
         }
     }
-
-    function Edit(Id) {
-        var url = '@Url.Content("~/")' + "Student/Edit";
-        $.get(url, { ID: Id }, function (data) {
-            document.getElementById("loading").innerHTML = data;
-            $("#exampleModal").modal('show');
-        }).done(function () {
-            // Reload the DataTable after the edit operation is completed
-            var oTable = $('#dataTable').DataTable();
-            OTable.ajax.reload();
+ 
+    function getbyID(ID) {
+       debugger
+        $.ajax({
+            url: "/Student/getbyID/" + ID,
+            typr: "GET",
+            contentType: "application/json;charset=UTF-8",
+            dataType: "json",
+            success: function (result) {
+                debugger
+                $('#txtStudentID').val(result.studentID);
+                $('#txtNameEdit').val(result.name);
+                $('#txtEmailEdit').val(result.email);
+                $('#txtCityEdit').val(result.city);
+                debugger
+                $('#exampleModal').modal('show');
+                $('#btnUpdate').show();
+             
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
         });
+        
     }
 
+    function Edit() {
+        var Student = {
+            StudentID: parseInt($('#txtStudentID').val()),
+            Name: $('#txtNameEdit').val(),
+            Email: $('#txtEmailEdit').val(),
+            City: $('#txtCityEdit').val()
+        };
+        $.ajax({
+            url: "/Student/Edit",
+            data: {Student:Student},
+            type: "POST",
+            dataType: "json",
+            success: function (result) {
+                Swal.fire(
+                    'Student Updated ',
+                    'updated record saved in db',
+                    'success'
+                )
+                var oTable = $('#dataTable').DataTable();
+                oTable.ajax.reload();
+                $('#exampleModal').modal('hide');
+                loadData();
+                $('#StudentID').val("");
+                $('#Name').val("");
+                $('#Email').val("");
+                $('#City').val("");
+                
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
 
 
 </script>
