@@ -1,0 +1,254 @@
+﻿@model IEnumerable<CrudApp.Models.Student>
+
+@{
+    ViewBag.Title = "Student CRUD";
+    Layout = "_Layout";
+}
+ 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.css" />
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.5.2/bootbox.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.5.2/bootbox.min.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<div class="container">
+    <button type="button" class="btn btn-success" style="margin-bottom: 10px" data-toggle="modal" data-target="#myModal"><i class="fa fa-plus"></i>Add Student</button>
+    <br />
+    <div>
+        <table id="dataTable" class="table table-striped dt-responsive nowrap" width="100%" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>StudentID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>City</th>
+                    <th colspan="2" class="text-center">Action</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+ 
+@*Adding new student to the table*@
+<div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Add Student</h4>
+            </div>
+            <div class="modal-body">
+                <form asp-action="Create" method="post">
+                    <input type="hidden" id="StudentID" />
+                    <div class="mb-3">
+                        <label for="Name" class="col-form-label"> Name :</label>
+                        <input type="text" name="Name" class="form-control" id="Name" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Email" class="col-form-label">Email:</label>
+                        <input type="text" class="form-control" name="Email" id="Email" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="City" class="col-form-label">City:</label>
+                        <input type="text" class="form-control" name="City" id="City" required />
+                    </div> <br />
+                    <div class="text-center">
+                        <button type="button" onclick="Add()" class="btn btn-primary btn-block">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@*End adding new student*@
+
+@*Edit student to the table*@
+<div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Edit Student</h4>
+            </div>
+            <div class="modal-body">
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" id="txtStudentID" />
+                    <div class="mb-3">
+                        <label for="Name" class="col-form-label"> Name :</label>
+                        <input type="text" name="Name" class="form-control" id="txtName" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Email" class="col-form-label">Email:</label>
+                        <input type="text" class="form-control" name="Email" id="txtEmail" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="City" class="col-form-label">City:</label>
+                        <input type="text" class="form-control" name="City" id="txtCity" required />
+                    </div> <br />
+                    <div class="text-center">
+                        <button type="button" onclick="Edit()" class="btn btn-primary btn-block">Update & Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@*End edit new student*@
+
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div id="loading"></div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        $('#dataTable').DataTable({
+            "ajax": {
+                "url": "/Student/LoadData",
+                "type": "GET",
+                "datatype": "json"
+            },
+            "columns": [
+                { "data": "studentID" },
+                { "data": "name" },
+                { "data": "email" },
+                { "data": "city" },
+                {
+                    "data": "studentID",
+                    "render": function (data, i, ev) {
+
+                        var html = `<a href='#' class='btn btn-primary' onclick='Edit(` + data + `)'><i class='fa fa-pencil'></i></a> |
+                                   <a type="button" class='btn btn-danger ml-5' onclick='DeleteData(`+ data + `)'><i class='fa fa-trash'></i></a> |`
+                        return html;
+                    }
+                },
+
+            ]
+        });
+
+         
+    });
+
+
+    function DeleteData(Id) {
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '@Url.Action("Delete", "Student")',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: { studentID: Id },
+                    success: function (data) {
+                        if (data.success) {
+                            var oTable = $('#dataTable').DataTable();
+                            oTable.ajax.reload();
+                            Swal.fire(
+                                'Deleted!',
+                                'Student has been deleted.',
+                                'success'
+                            );
+                        } else {
+                            Swal.fire(
+                                'Error!',
+                                data.error,
+                                'error'
+                            );
+                        }
+                    },
+                    error: function () {
+                        Swal.fire(
+                            'Error!',
+                            'An error occurred while trying to delete the student.',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
+
+
+    }
+ 
+    function Add() {
+ 
+        var studentID = '0';
+        if ($('#StudentID').val() !== '') {
+            studentID = $('#StudentID').val();
+        }
+          
+        var stdObj = {
+            StudentID: studentID,
+            Name: $('#Name').val(),
+            Email: $('#Email').val(),
+            City: $('#City').val(),
+
+        };
+        console.log(JSON.stringify(stdObj));
+        $.ajax({
+            url: "/Student/Create",
+            data: { student: stdObj },
+            type: "POST",
+            success: function (result) {
+                 
+                if (result.status == true) {
+                    $('#myModal').modal('hide');
+                    var oTable = $('#dataTable').DataTable();
+                    oTable.ajax.reload();
+                    Swal.fire(
+                        'New Student Added ',
+                        'Student saved in DB',
+                        'success'
+                    )
+                }
+                clearTextboxes();
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+ 
+    function clearTextboxes() {
+        var inputs = document.querySelectorAll('input');
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].value = "";
+        }
+    }
+
+    function Edit(Id) {
+        var url = '@Url.Content("~/")' + "Student/Edit";
+        $.get(url, { ID: Id }, function (data) {
+            document.getElementById("loading").innerHTML = data;
+            $("#exampleModal").modal('show');
+        }).done(function () {
+            // Reload the DataTable after the edit operation is completed
+            var oTable = $('#dataTable').DataTable();
+            OTable.ajax.reload();
+        });
+    }
+
+
+
+</script>
+
+
